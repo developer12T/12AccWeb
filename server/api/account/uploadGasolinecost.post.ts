@@ -1,5 +1,7 @@
 import { readMultipartFormData, createError } from "h3";
-import type { ExcelAccount } from '~/types/Account'
+import type { ExcelAccount } from "~/types/Account";
+import { promises as fs } from "fs";
+import path from 'path';
 // import * as XLSX from 'xlsx'
 
 export default defineEventHandler(async (event) => {
@@ -19,17 +21,25 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    const uploadDir = path.join(process.cwd(), "server", "uploads");
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    const savePath = path.join(
+      uploadDir,
+      `${Date.now()}_${file.filename || "upload.xlsx"}`
+    );
+
+    // ✍️ เขียนไฟล์ลงใน server/uploads
+    await fs.writeFile(savePath, file.data);
+
     const workbook = XLSX.read(file.data, { type: "buffer" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-
-
     const json = XLSX.utils.sheet_to_json<ExcelAccount>(sheet);
 
-
-    for (const row of json) {
-        console.log(row.surName)
-    }
+    // for (const row of json) {
+    //   console.log(row.surName);
+    // }
 
     return {
       message: "✅ Uploaded successfully!",
