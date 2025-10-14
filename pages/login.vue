@@ -54,7 +54,6 @@ const SignIn = async () => {
         loginValidation.value = false;
         console.log('[Server] เข้าสู่ระบบสำเร็จ');
         router.push("/");
-        window.location.reload();
     } else {
         console.log('[Server] ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
         loginValidation.value = true;
