@@ -1,4 +1,4 @@
-export type ExcelAccount = {
+export type ExcelAccountAll = {
   TVCONO: number;
   TVDIVI: string;
   TVYEA4: number;
@@ -27,3 +27,23 @@ export type ExcelAccount = {
   TVREM1: string;
   TVREM2: string;
 };
+
+export type AccountFromExcel = {
+  year:string,
+  supplierNumber:string,
+  supplierInvoice:string,
+  taxInvoice:string,
+  vatBranchCode:string,
+  invoiceAmount:string,
+  vatAmount:string,
+  vatCode:string,
+  voucherNumber:string,
+  taxInvoiceDate:string,
+  accountingDate:string,
+  vatRegistration:string,
+  vatBranchName:string,
+  supplierNameEN:string,
+  supplierNameTH:string,
+  remarkLine1:string,
+  remarkLine2:string
+}
