@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import type { LoginResponse } from "~/types/User";
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     validateLogin: null as string | null,
@@ -18,8 +19,10 @@ export const useAuthStore = defineStore('auth', {
     async login(userLogin: string, passwordLogin: string) {
       try {
         // ✅ ใช้ $fetch แทน axios
+        const config = useRuntimeConfig()
+
         const response = await $fetch<LoginResponse>('/api/cash/login', {
-          baseURL: import.meta.env.VITE_API_URL, // 🔸 ใช้จาก .env
+          baseURL: config.public.API_URL as string, // 🔸 ใช้จาก .env
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

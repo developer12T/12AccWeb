@@ -8,18 +8,21 @@
             </div>
 
             <!-- Upload Box -->
-            <div @click="openFileDialog"
-                class="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mb-2" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M3 16.5V8.25a2.25 2.25 0 012.25-2.25h4.5A2.25 2.25 0 0112 8.25v8.25m0 0l3-3m-3 3l-3-3m3 3V3" />
-                </svg>
-                <p class="text-gray-600">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือก</p>
-                <input type="file" ref="fileInput" id="excelFile" class="hidden" accept=".xlsx,.xls"
-                    @change="onFileSelected" />
-            </div>
+            <div v-if="formatError === true || formatError === null">
+                <div @click="openFileDialog"
+                    class="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mb-2" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 16.5V8.25a2.25 2.25 0 012.25-2.25h4.5A2.25 2.25 0 0112 8.25v8.25m0 0l3-3m-3 3l-3-3m3 3V3" />
+                    </svg>
+                    
+                    <p class="text-gray-600">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือก</p>
+                    <input type="file" ref="fileInput" id="excelFile" class="hidden" accept=".xlsx,.xls"
+                        @change="onFileSelected" />
 
+                </div>
+            </div>
             <!-- File Info -->
             <div class="mt-6 text-center text-sm text-gray-600">
                 <p>
@@ -44,10 +47,12 @@
                     class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 font-medium transition">
                     ยกเลิก
                 </button>
-                <button @click="getDataExcel"
-                    class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition">
-                    อัปโหลด
-                </button>
+                <div v-if="!formatError">
+                    <button @click="handleFileUpload"
+                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition">
+                        อัปโหลด
+                    </button>
+                </div>
             </div>
 
             <!-- Preview Table -->
@@ -94,8 +99,8 @@ import type { ExcelAccount } from "~/types/Account";
 const { default: XLSX } = await import("xlsx-js-style");
 const store = useAuthStore();
 
-
-const formatError = ref<boolean>()
+const selectedFile = ref<File | null>(null)
+const formatError = ref<boolean | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const fileName = ref<string>('')
 const dataExcel = ref<ExcelAccount[] | null>(null)
@@ -152,7 +157,8 @@ const onFileSelected = async (event: Event) => {
         }
 
         dataExcel.value = jsonData
-        console.log('📑 ข้อมูลจาก Excel:', jsonData)
+        selectedFile.value = file
+        // console.log('📑 ข้อมูลจาก Excel:', jsonData)
     }
 
 }
@@ -160,6 +166,7 @@ const onFileSelected = async (event: Event) => {
 const clearData = () => {
     fileName.value = ''
     dataExcel.value = []
+    formatError.value = null
     const input = document.getElementById('excelFile') as HTMLInputElement
     if (input) input.value = '' // ✅ ล้างค่าของ input file
     console.log('🧹 เคลียร์ข้อมูลเรียบร้อย')
@@ -169,10 +176,32 @@ const openFileDialog = () => {
     fileInput.value?.click()
 }
 
-const getDataExcel = async () => {
-    const { data, error } = await useFetch<ExcelAccount[]>('/api/account/getGasolinecost')
-    if (!error.value) {
-        dataExcel.value = data.value || []
+const uploadExcelFile = async (file: File) => {
+    console.log("handleFileUpload")
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+        const data = await $fetch('/api/account/uploadGasolinecost', {
+            method: 'POST',
+            body: formData
+        });
+        console.log("อัปโหลดสำเร็จ", data);
+        alert("อัปโหลดสำเร็จ")
+    } catch (error) {
+        console.error("อัปโหลดล้มเหลว", error);
+        alert("อัปโหลดล้มเหลว")
     }
 }
+
+
+const handleFileUpload = () => {
+    if (!selectedFile.value) {
+        alert("กรุณาเลือกไฟล์ก่อนอัปโหลด");
+        return;
+    }
+
+    uploadExcelFile(selectedFile.value);
+};
+
 </script>

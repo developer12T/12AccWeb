@@ -1,9 +1,29 @@
-    export type ExcelAccount = {
-        saleCode: string,
-        username:string,
-        firstName:string,
-        surName:string,
-        password:string,
-        tel:string,
-        area:string
-    }
+export type ExcelAccount = {
+  TVCONO: number;
+  TVDIVI: string;
+  TVYEA4: number;
+  TVSUNO: string;
+  TVSINO: string;
+  TVTXNO: string;
+  TVACAM: number;
+  TVVTAM: number;
+  TVVTCD: number;
+  TVVTP1: string;
+  TVCUCD: string;
+  TVIVDT: number;
+  TVACDT: number;
+  TVVONO: number;
+  TVSPYN: string;
+  TVSUNM: string;
+  TVADR1: string;
+  TVRGDT: number;
+  TVRGTM: number;
+  TVLMDT: number;
+  TVCHNO: number;
+  TVCHID: string;
+  TVAIT2: string;
+  TVVRNO: string;
+  TVVSEQ: string;
+  TVREM1: string;
+  TVREM2: string;
+};
