@@ -1,15 +1,9 @@
-// 📁 server/database/connectDB.ts
-
 import { Sequelize, DataTypes, QueryTypes } from 'sequelize'
-import mssql from 'mssql'
 
 let sequelize: Sequelize | null = null
 
 export const connectDBM3 = async () => {
   const config = useRuntimeConfig()
-
-  console.log("test",config.M3_DATABASE)
-
 
   if (!sequelize) {
     sequelize = new Sequelize(
@@ -18,15 +12,14 @@ export const connectDBM3 = async () => {
       config.M3_PASSWORD,
       {
         host: config.M3_HOST,
-        dialect: 'mssql',
-        dialectModule: mssql,
+        dialect: 'mssql', // Sequelize จะใช้ tedious เอง
         logging: false,
         dialectOptions: {
           options: {
             encrypt: false,
-            enableArithAbort: true
-          }
-        }
+            enableArithAbort: true,
+          },
+        },
       }
     )
 

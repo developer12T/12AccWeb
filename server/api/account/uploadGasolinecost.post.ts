@@ -2,14 +2,15 @@ import { readMultipartFormData, createError } from "h3";
 import type { AccountFromExcel, ExcelAccountAll } from "~/types/Account";
 import { promises as fs } from "fs";
 import path from "path";
+// import { sequelize } from '~/server/database/connectDBM3'
 import { connectDBM3 } from "~/server/database/connectDBM3";
-// import * as XLSX from 'xlsx'
+import { defineXTHVATModel } from "~/server/database/models/accountModel";
 
 export default defineEventHandler(async (event) => {
   try {
     // const XLSX = await import('xlsx-js-style')
-    const db = await connectDBM3()
-    const result = await db.query("SELECT  * FROM MGHEAD")
+    // const db = await connectDBM3()
+    // const result = await db.query("SELECT  * FROM MGHEAD")
 
     const { default: XLSX } = await import("xlsx-js-style");
     const formData = await readMultipartFormData(event);
@@ -34,7 +35,7 @@ export default defineEventHandler(async (event) => {
     );
 
     // ✍️ เขียนไฟล์ลงใน server/uploads
-    await fs.writeFile(savePath, file.data);
+    // await fs.writeFile(savePath, file.data);
 
     const workbook = XLSX.read(file.data, { type: "buffer" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -47,34 +48,40 @@ export default defineEventHandler(async (event) => {
       const dataTran = {
         TVCONO: 410,
         TVDIVI: "OTT",
-        TVYEA4: row.year,
-        TVSUNO: row.supplierNumber,
-        TVSINO: row.supplierInvoice,
-        TVTXNO: row.taxInvoice,
-        TVACAM: row.invoiceAmount,
-        TVVTAM: row.vatAmount,
-        TVVTCD: row.vatCode,
+        TVYEA4: '2025',
+        TVSUNO: 'L010001',
+        TVSINO: row.InvoiceNo,
+        TVTXNO: row.InvoiceNo,
+        TVACAM: row.ExcludeVATAmount,
+        TVVTAM: row.VATAmount,
+        TVVTCD: 11,
         TVVTP1: 7,
         TVCUCD: "",
-        TVIVDT: row.taxInvoiceDate,
-        TVACDT: row.accountingDate,
+        TVIVDT: row.TaxInvoiceDate,
+        TVACDT: row.AccountingEntryDate,
         TVVONO: row.voucherNumber,
         TVSPYN: "",
-        TVSUNM: row.supplierNameEN,
+        TVSUNM: row.MerchantName,
         TVADR1: "",
-        TVRGDT: "today",
-        TVRGTM: "timespam",
-        TVLMDT: "today",
+        TVRGDT: 20251016,
+        TVRGTM: 164728,
+        TVLMDT: 20251016,
         TVCHNO: 25,
         TVCHID: "AC03 ",
-        TVAIT2: "0000",
-        TVVRNO: row.vatRegistration,
-        TVVSEQ: "0000",
-        TVREM1: row.remarkLine1,
+        TVAIT2: row.VATBranch,
+        TVVRNO: row.TaxID,
+        TVVSEQ: row.BranchNumber,
+        TVREM1: row.Location,
         TVREM2: "",
       };
-      data.push(dataTran)
+      data.push(dataTran);
     }
+
+    // const sequelize = await connectDBM3();
+    // const XTHVAT = defineXTHVATModel(sequelize);
+    // const dataTest = await XTHVAT.findAll()
+
+    // await XTHVAT.bulkCreate(data, { validate: true });
 
     // return {
     //   message: "✅ Uploaded successfully!",
@@ -86,7 +93,7 @@ export default defineEventHandler(async (event) => {
     return {
       statusCode: 200,
       message: "✅ Uploaded successfully!",
-      data: result,
+      data: data,
     };
   } catch (err: any) {
     console.error("Upload error:", err);
