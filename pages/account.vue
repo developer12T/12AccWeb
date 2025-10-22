@@ -11,8 +11,11 @@
                 </button>
             </div>
             <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">📤 อัปโหลดไฟล์ Excel</h1>
+                <h1 class="text-2xl font-bold text-gray-800">โปรแกรม Upload ค่าน้ำมัน</h1>
+                <p class="text-gray-500 text-sm mt-1">📤 อัปโหลดไฟล์ Excel</p>
                 <p class="text-gray-500 text-sm mt-1">รองรับไฟล์ .xlsx หรือ .xls เท่านั้น</p>
+
+
             </div>
 
             <!-- Upload Box -->
@@ -117,7 +120,7 @@ import {
     formatDateToYYYYMMDD,
     getThaiRegisterTime,
 } from "~/middleware/excelDateToJSDate";
-
+import Swal from 'sweetalert2'
 
 const store = useAuthStore();
 
@@ -130,179 +133,206 @@ const router = useRouter();
 
 
 const onFileSelected = async (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (!file) return
+    const target = event.target as HTMLInputElement
+    const file = target.files?.[0]
+    if (!file) return
 
-  fileName.value = file.name
+    fileName.value = file.name
 
-  const data = await file.arrayBuffer()
-  const workbook = XLSX.read(data, { type: 'array' })
+    const data = await file.arrayBuffer()
+    const workbook = XLSX.read(data, { type: 'array' })
 
-  if (!workbook.SheetNames[0]) throw new Error('❌ ไม่พบชีตในไฟล์ Excel')
+    if (!workbook.SheetNames[0]) throw new Error('❌ ไม่พบชีตในไฟล์ Excel')
 
-  const sheet = workbook.Sheets[workbook.SheetNames[0]]
-  if (!sheet) throw new Error('❌ ไม่พบชีตในไฟล์ Excel')
+    const sheet = workbook.Sheets[workbook.SheetNames[0]]
+    if (!sheet) throw new Error('❌ ไม่พบชีตในไฟล์ Excel')
 
-  // ✅ อ่านเฉพาะ header ก่อน
-  const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 })
-  const headerRow = rows[0] || []
+    // ✅ อ่านเฉพาะ header ก่อน
+    const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 })
+    const headerRow = rows[0] || []
 
-  const requiredKeys = [
-    'TaxInvoiceDate',
-    'AccountingEntryDate',
-    'TaxID',
-    'MerchantName',
-    'Location',
-    'BranchNumber',
-    'InvoiceNo',
-    'ExcludeVATAmount',
-    'VATAmount',
-    'VoucherNumber',
-    'VATBranch'
-  ] as const satisfies (keyof AccountFromExcel)[]
+    const requiredKeys = [
+        'TaxInvoiceDate',
+        'AccountingEntryDate',
+        'TaxID',
+        'MerchantName',
+        'Location',
+        'BranchNumber',
+        'InvoiceNo',
+        'ExcludeVATAmount',
+        'VATAmount',
+        'VoucherNumber',
+        'VATBranch'
+    ] as const satisfies (keyof AccountFromExcel)[]
 
-  const columns = headerRow.map(String)
-  // console.log("columns", columns)
+    const columns = headerRow.map(String)
+    // console.log("columns", columns)
 
-  if (columns.length === 0) {
-    alert('❌ ไม่พบคอลัมน์ในไฟล์ Excel')
-    return
-  }
-
-  // ✅ ตรวจสอบคอลัมน์ครบไหม
-  const missing = requiredKeys.filter(k => !columns.includes(k))
-  if (missing.length > 0) {
-    alert(`❌ คอลัมน์ในไฟล์ไม่ครบ: ${missing.join(', ')}`)
-    formatError.value = true
-    dataExcel.value = []
-    return
-  }
-
-  formatError.value = false
-
-  const jsonData = XLSX.utils.sheet_to_json<AccountFromExcel>(sheet)
-  let typeErrors: string[] = []
-
-  dataExcel.value = jsonData.map((item, index) => {
-    if (typeof item.TaxInvoiceDate !== 'number') {
-      typeErrors.push(`แถวที่ ${index + 2}: TaxInvoiceDate ไม่ถูกต้อง`)
-    }
-    if (typeof item.AccountingEntryDate !== 'number') {
-      typeErrors.push(`แถวที่ ${index + 2}: AccountingEntryDate ไม่ถูกต้อง`)
+    if (columns.length === 0) {
+        Swal.fire({
+            icon: 'error',
+            title: 'คอลัมน์ในไฟล์ไม่ครบ',
+            text: `❌ ไม่พบคอลัมน์ในไฟล์ Excel`
+        })
+        clearData()
     }
 
-    if (typeof item.TaxID !== 'string') {
-      typeErrors.push(`แถวที่ ${index + 2}: TaxID ต้องเป็นข้อความ`)
-    } else if (item.TaxID.trim().length >= 16) {
-      typeErrors.push(`แถวที่ ${index + 2}: TaxID ต้องมีไม่เกิน 16 ตัวอักษร`)
+    // ✅ ตรวจสอบคอลัมน์ครบไหม
+    const missing = requiredKeys.filter(k => !columns.includes(k))
+    if (missing.length > 0) {
+        // alert(`❌ คอลัมน์ในไฟล์ไม่ครบ: ${missing.join(', ')}`)
+
+        Swal.fire({
+            icon: 'error',
+            title: 'คอลัมน์ในไฟล์ไม่ครบ',
+            text: `❌ คอลัมน์ในไฟล์ไม่ครบ: ${missing.join(', ')}`
+        })
+        clearData()
+        return
     }
 
-    if (typeof item.MerchantName !== 'string') {
-      typeErrors.push(`แถวที่ ${index + 2}: MerchantName ต้องเป็นข้อความ`)
-    } else if (item.MerchantName.trim().length > 36) {
-      typeErrors.push(`แถวที่ ${index + 2}: MerchantName ยาวเกินไป (เกิน 36 ตัวอักษร)`)
-    }
+    formatError.value = false
 
-    if (typeof item.Location !== 'string') {
-      typeErrors.push(`แถวที่ ${index + 2}: Location ต้องเป็นข้อความ`)
-    }
-    // else if (item.Location.trim().length > 40) {
-    //   typeErrors.push(`แถวที่ ${index + 2}: Location ยาวเกินไป (เกิน 40 ตัวอักษร)`)
-    // }
+    const jsonData = XLSX.utils.sheet_to_json<AccountFromExcel>(sheet)
+    let typeErrors: string[] = []
 
-    if (typeof item.BranchNumber !== 'string') {
-      typeErrors.push(`แถวที่ ${index + 2}: BranchNumber ต้องเป็นข้อความ`)
-    } else if (item.BranchNumber.trim().length > 5) {
-      typeErrors.push(`แถวที่ ${index + 2}: BranchNumber ยาวเกินไป (เกิน 5 ตัวอักษร)`)
-    }
+    dataExcel.value = jsonData.map((item, index) => {
+        if (typeof item.TaxInvoiceDate !== 'number') {
+            typeErrors.push(`แถวที่ ${index + 2}: TaxInvoiceDate ไม่ถูกต้อง`)
+        }
+        if (typeof item.AccountingEntryDate !== 'number') {
+            typeErrors.push(`แถวที่ ${index + 2}: AccountingEntryDate ไม่ถูกต้อง`)
+        }
 
-    if (typeof item.InvoiceNo !== 'string') {
-      typeErrors.push(`แถวที่ ${index + 2}: InvoiceNo ต้องเป็นข้อความ`)
-    } else if (item.InvoiceNo.trim().length > 24) {
-      typeErrors.push(`แถวที่ ${index + 2}: InvoiceNo ยาวเกินไป (เกิน 24 ตัวอักษร)`)
-    }
+        if (typeof item.TaxID !== 'string') {
+            typeErrors.push(`แถวที่ ${index + 2}: TaxID ต้องเป็นข้อความ`)
+        } else if (item.TaxID.trim().length >= 16) {
+            typeErrors.push(`แถวที่ ${index + 2}: TaxID ต้องมีไม่เกิน 16 ตัวอักษร`)
+        }
 
-    if (typeof item.ExcludeVATAmount !== 'number') {
-      typeErrors.push(`แถวที่ ${index + 2}: ExcludeVATAmount ต้องเป็นตัวเลข`)
-    }
+        if (typeof item.MerchantName !== 'string') {
+            typeErrors.push(`แถวที่ ${index + 2}: MerchantName ต้องเป็นข้อความ`)
+        } else if (item.MerchantName.trim().length > 36) {
+            typeErrors.push(`แถวที่ ${index + 2}: MerchantName ยาวเกินไป (เกิน 36 ตัวอักษร)`)
+        }
 
-    if (typeof item.VATAmount !== 'number') {
-      typeErrors.push(`แถวที่ ${index + 2}: VATAmount ต้องเป็นตัวเลข`)
-    }
+        if (typeof item.Location !== 'string') {
+            typeErrors.push(`แถวที่ ${index + 2}: Location ต้องเป็นข้อความ`)
+        }
+        // else if (item.Location.trim().length > 40) {
+        //   typeErrors.push(`แถวที่ ${index + 2}: Location ยาวเกินไป (เกิน 40 ตัวอักษร)`)
+        // }
 
-    if (typeof item.VoucherNumber !== 'string') {
-      typeErrors.push(`แถวที่ ${index + 2}: VoucherNumber ต้องเป็นข้อความ`)
-    } else if (item.VoucherNumber.trim().length > 8) {
-      typeErrors.push(`แถวที่ ${index + 2}: VoucherNumber ยาวเกินไป (เกิน 8 ตัวอักษร)`)
-    }
+        if (typeof item.BranchNumber !== 'string') {
+            typeErrors.push(`แถวที่ ${index + 2}: BranchNumber ต้องเป็นข้อความ`)
+        } else if (item.BranchNumber.trim().length > 5) {
+            typeErrors.push(`แถวที่ ${index + 2}: BranchNumber ยาวเกินไป (เกิน 5 ตัวอักษร)`)
+        }
 
-    if (typeof item.VATBranch !== 'string') {
-      typeErrors.push(`แถวที่ ${index + 2}: VATBranch ต้องเป็นข้อความ`)
-    } else if (item.VATBranch.trim().length > 8) {
-      typeErrors.push(`แถวที่ ${index + 2}: VATBranch ยาวเกินไป (เกิน 8 ตัวอักษร)`)
-    }
+        if (typeof item.InvoiceNo !== 'string') {
+            typeErrors.push(`แถวที่ ${index + 2}: InvoiceNo ต้องเป็นข้อความ`)
+        } else if (item.InvoiceNo.trim().length > 24) {
+            typeErrors.push(`แถวที่ ${index + 2}: InvoiceNo ยาวเกินไป (เกิน 24 ตัวอักษร)`)
+        }
 
-    console.log("typeof", typeof item.TaxInvoiceDate)
+        if (typeof item.ExcludeVATAmount !== 'number') {
+            typeErrors.push(`แถวที่ ${index + 2}: ExcludeVATAmount ต้องเป็นตัวเลข`)
+        }
 
-    const TaxInvoiceDate = excelDateToJSDate(item.TaxInvoiceDate)
-    const AccountingEntryDate = excelDateToJSDate(item.AccountingEntryDate)
-    const TaxInvoiceDateStr = Number(formatDateToYYYYMMDD(TaxInvoiceDate))
-    const AccountingEntryDateStr = Number(formatDateToYYYYMMDD(AccountingEntryDate))
+        if (typeof item.VATAmount !== 'number') {
+            typeErrors.push(`แถวที่ ${index + 2}: VATAmount ต้องเป็นตัวเลข`)
+        }
 
-    return {
-      ...item,
-      TaxInvoiceDateStr,
-      AccountingEntryDateStr,
-      InvoiceNo:
-        item.InvoiceNo && item.InvoiceNo.toString().trim() !== ''
-          ? item.InvoiceNo.toString().trim()
-          : 'ไม่มี'
-    }
-  })
+        if (typeof item.VoucherNumber !== 'string') {
+            typeErrors.push(`แถวที่ ${index + 2}: VoucherNumber ต้องเป็นข้อความ`)
+        } else if (item.VoucherNumber.trim().length > 8) {
+            typeErrors.push(`แถวที่ ${index + 2}: VoucherNumber ยาวเกินไป (เกิน 8 ตัวอักษร)`)
+        }
 
-  // ✅ ตรวจว่ามีแถวไหน "คอลัมน์ไม่ครบ" หรือมีช่องว่าง
-  const incompleteRows = dataExcel.value.filter(row => {
-    return requiredKeys.some(key => {
-      const value = row[key]
-      return value === undefined || value === null || value.toString().trim() === ''
+        if (typeof item.VATBranch !== 'string') {
+            typeErrors.push(`แถวที่ ${index + 2}: VATBranch ต้องเป็นข้อความ`)
+        } else if (item.VATBranch.trim().length > 8) {
+            typeErrors.push(`แถวที่ ${index + 2}: VATBranch ยาวเกินไป (เกิน 8 ตัวอักษร)`)
+        }
+
+        console.log("typeof", typeof item.TaxInvoiceDate)
+
+        const TaxInvoiceDate = excelDateToJSDate(item.TaxInvoiceDate)
+        const AccountingEntryDate = excelDateToJSDate(item.AccountingEntryDate)
+        const TaxInvoiceDateStr = Number(formatDateToYYYYMMDD(TaxInvoiceDate))
+        const AccountingEntryDateStr = Number(formatDateToYYYYMMDD(AccountingEntryDate))
+
+        return {
+            ...item,
+            TaxInvoiceDateStr,
+            AccountingEntryDateStr,
+            InvoiceNo:
+                item.InvoiceNo && item.InvoiceNo.toString().trim() !== ''
+                    ? item.InvoiceNo.toString().trim()
+                    : 'ไม่มี'
+        }
     })
-  })
 
-  // ✅ แจ้งเตือนถ้าพบข้อมูลไม่ครบ
-  if (incompleteRows.length > 0) {
-    alert(`⚠️ พบข้อมูลไม่ครบจำนวน ${incompleteRows.length} แถว`)
-    clearData()
-    return // ✅ หยุดการทำงานฟังก์ชันทันที
-  }
+    // ✅ ตรวจว่ามีแถวไหน "คอลัมน์ไม่ครบ" หรือมีช่องว่าง
+    const incompleteRows = dataExcel.value.filter(row => {
+        return requiredKeys.some(key => {
+            const value = row[key]
+            return value === undefined || value === null || value.toString().trim() === ''
+        })
+    })
 
-  const invoices = jsonData.map(item => item.InvoiceNo).filter(Boolean) // ตัด undefined/null ออก
+    // ✅ แจ้งเตือนถ้าพบข้อมูลไม่ครบ
+    if (incompleteRows.length > 0) {
 
-  // ✅ เอาเฉพาะตัวที่ซ้ำกัน
-  const dupInvoice = invoices.filter((inv, i, arr) => arr.indexOf(inv) !== i)
+        Swal.fire({
+            icon: 'error',
+            title: 'ข้อมูลผิดพลาด',
+            text: `⚠️ พบข้อมูลไม่ครบจำนวน ${incompleteRows.length} แถว`
+        })
 
-  // ✅ เอาให้เหลือไม่ซ้ำซ้อน (เช่นถ้าซ้ำ 3 ครั้ง เอามาแค่ครั้งเดียว)
-  const uniqueDupInvoice = [...new Set(dupInvoice)]
+        clearData()
+        return // ✅ หยุดการทำงานฟังก์ชันทันที
+    }
 
-  if (uniqueDupInvoice.length > 0) {
-    alert(`⚠️ มี Invoice ซ้ำกัน ${uniqueDupInvoice}`)
-    clearData()
-    return // ✅ หยุดการทำงานฟังก์ชันทันที
-  }
+    const invoices = jsonData.map(item => item.InvoiceNo).filter(Boolean) // ตัด undefined/null ออก
 
-  if (typeErrors.length > 0) {
-    alert(
-      `⚠️ พบข้อมูลที่ type ไม่ถูกต้อง ${typeErrors.length} รายการ\n\n` +
-      typeErrors.slice(0, 5).join('\n') +
-      (typeErrors.length > 5 ? '\n...' : '')
-    )
-    clearData()
-    return
-  }
+    // ✅ เอาเฉพาะตัวที่ซ้ำกัน
+    const dupInvoice = invoices.filter((inv, i, arr) => arr.indexOf(inv) !== i)
 
-  selectedFile.value = file
-  target.value = ''
-  // console.log('📑 ข้อมูลจาก Excel:', jsonData)
+    // ✅ เอาให้เหลือไม่ซ้ำซ้อน (เช่นถ้าซ้ำ 3 ครั้ง เอามาแค่ครั้งเดียว)
+    const uniqueDupInvoice = [...new Set(dupInvoice)]
+
+    if (uniqueDupInvoice.length > 0) {
+
+        Swal.fire({
+            icon: 'error',
+            title: 'มี Invoice ซ้ำ',
+            text: `⚠️ มี Invoice ซ้ำกันในไฟล์ ${uniqueDupInvoice}`
+        })
+
+        clearData()
+        return // ✅ หยุดการทำงานฟังก์ชันทันที
+    }
+
+    if (typeErrors.length > 0) {
+        Swal.fire({
+            icon: 'error',
+            title: `⚠️ พบข้อมูลที่ type ไม่ถูกต้อง (${typeErrors.length} รายการ)`,
+            html: `
+                    <ul style="text-align: left; max-height: 300px; overflow-y: auto; padding-left: 1.2em;">
+                    ${typeErrors.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                `,
+            confirmButtonText: 'ปิด',
+            width: '40em',
+        })
+        clearData()
+        return
+    }
+
+    selectedFile.value = file
+    target.value = ''
+    // console.log('📑 ข้อมูลจาก Excel:', jsonData)
 }
 
 
@@ -330,21 +360,50 @@ const uploadExcelFile = async (file: File) => {
             method: 'POST',
             body: formData
         })
-        console.log("อัปโหลดสำเร็จ", data)
-        alert("อัปโหลดสำเร็จ")
+        // console.log("อัปโหลดสำเร็จ", data)
+        // alert("อัปโหลดสำเร็จ")
+        Swal.fire({
+            icon: 'success',
+            title: 'อัปโหลดสำเร็จ'
+        })
     } catch (error: any) {
-        console.error("อัปโหลดล้มเหลว", error)
 
         const status = error?.response?.status
         const message = error?.response?._data?.message || error.message || "ไม่ทราบสาเหตุ"
         const responseData = error?.response?._data
         if (status === 405) {
             const duplicates = responseData?.data || []
-            alert(`❌ ข้อมูลซ้ำ ${duplicates.length} รายการ:\n${duplicates.join('\n')}`)
+            // alert(`❌ ข้อมูลซ้ำ ${duplicates.length} รายการ:\n${duplicates.join('\n')}`)
+            const listHTML = (duplicates as string[])
+                .map((item: string) => `<li>${item}</li>`)
+                .join('')
+
+            Swal.fire({
+                icon: 'error',
+                title: '⚠️ พบข้อมูลซ้ำ',
+                html: `
+                        <p>พบข้อมูลซ้ำจำนวน ${duplicates.length} รายการ:</p>
+                        <ul style="text-align: center; max-height: 200px; overflow-y: auto;">
+                        ${listHTML}
+                        </ul>
+                      `
+            })
+
+
+
         } else if (status === 404) {
-            alert("⚠️ ไม่พบข้อมูลในไฟล์")
+            // alert("⚠️ ไม่พบข้อมูลในไฟล์")
+            Swal.fire({
+                icon: 'error',
+                title: 'ไม่พบข้อมูลในไฟล์'
+            })
+
         } else if (status === 500) {
-            alert("⚠️ ข้อมูลไม่ถูกต้อง: " + message)
+            Swal.fire({
+                icon: 'error',
+                title: 'ข้อมูลไม่ถูกต้อง',
+                text: '⚠️ ข้อมูลไม่ถูกต้อง: " + message'
+            })
         }
     }
 
@@ -353,7 +412,13 @@ const uploadExcelFile = async (file: File) => {
 
 const handleFileUpload = () => {
     if (!selectedFile.value) {
-        alert("กรุณาเลือกไฟล์ก่อนอัปโหลด");
+        // alert("กรุณาเลือกไฟล์ก่อนอัปโหลด");
+
+        Swal.fire({
+            icon:'error',
+            title:'กรุณาเลือกไฟล์ก่อนอัปโหลด'
+        })
+
         return;
     }
 
