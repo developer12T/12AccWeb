@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2022",         // ✅ หรือ esnext ก็ได้
-    "module": "esnext",         // ✅ เพื่อให้ top-level await ใช้ได้
+    "target": "ES2022",         // ✅ หรือ esnext ก็ได้
+    "module": "ESNext",         // ✅ เพื่อให้ top-level await ใช้ได้
     "moduleResolution": "node",
     "types": ["node"],
     "allowJs": true,

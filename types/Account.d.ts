@@ -29,8 +29,8 @@ export type ExcelAccountAll = {
 };
 
 export type AccountFromExcel = {
-  TaxInvoiceDate: date;
-  AccountingEntryDate: date;
+  TaxInvoiceDate: float;
+  AccountingEntryDate: float;
   TaxID: string;
   MerchantName: string;
   Location: string;
