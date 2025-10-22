@@ -11,12 +11,9 @@ import {
   getThaiRegisterTime,
 } from "~/middleware/excelDateToJSDate";
 
-export default defineEventHandler(async (event) => {
-  // try {
-  // const XLSX = await import('xlsx-js-style')
-  // const db = await connectDBM3()
-  // const result = await db.query("SELECT  * FROM MGHEAD")
+let gasolineTimestamps: Record<string, number> = {};
 
+export default defineEventHandler(async (event) => {
   const { default: XLSX } = await import("xlsx-js-style");
   const formData = await readMultipartFormData(event);
   if (!formData || formData.length === 0) {
@@ -31,13 +28,29 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  // console.log("📁 Upload:", file.filename);
+
+  // ===== Debounce logic =====
+  const now = Date.now();
+  const lastUpdate = gasolineTimestamps[file.filename!] || 0;
+  const ONE_MINUTE = 5 * 1000;
+
+  if (now - lastUpdate < ONE_MINUTE) {
+    throw createError({
+      statusCode: 429,
+      message: "❌ กรุณารออย่างน้อย 5 วินาทีก่อนอัปโหลดไฟล์เดิมอีกครั้ง",
+    });
+  }
+
+  gasolineTimestamps[file.filename!] = now;
+
   const uploadDir = path.join(process.cwd(), "server", "uploads");
   await fs.mkdir(uploadDir, { recursive: true });
 
-  const savePath = path.join(
-    uploadDir,
-    `${Date.now()}_${file.filename || "upload.xlsx"}`
-  );
+  // const savePath = path.join(
+  //   uploadDir,
+  //   `${Date.now()}_${file.filename || "upload.xlsx"}`
+  // );
 
   // ✍️ เขียนไฟล์ลงใน server/uploads
   // await fs.writeFile(savePath, file.data);
@@ -55,9 +68,6 @@ export default defineEventHandler(async (event) => {
   const sequelize = await connectDBM3();
   const XTHVAT = defineXTHVATModel(sequelize);
 
-  // เริ่ม Transaction
-  const t = await sequelize.transaction();
-
   const InvoiceM3 = await XTHVAT.findAll({
     where: {
       TVSUNO: "L060003",
@@ -74,14 +84,16 @@ export default defineEventHandler(async (event) => {
     }
   }
   // console.log(existInvoice.length);
-  if ((existInvoice.length > 0)) {
-    setResponseStatus(event, 405)
+  if (existInvoice.length > 0) {
+    setResponseStatus(event, 405);
     return {
       statusCode: 405,
       message: "Already in db",
       data: existInvoice,
     };
   } else {
+    // เริ่ม Transaction
+    const t = await sequelize.transaction();
     try {
       for (const row of json) {
         const TaxInvoiceDate = excelDateToJSDate(row.TaxInvoiceDate);
@@ -135,7 +147,7 @@ export default defineEventHandler(async (event) => {
       console.error("❌ มีข้อผิดพลาด Transaction ถูก rollback:", err);
       throw err; // ส่ง error กลับไปให้ caller รู้ด้วย
     }
-    setResponseStatus(event, 200)
+    setResponseStatus(event, 200);
     return {
       statusCode: 200,
       message: "✅ Uploaded successfully!",

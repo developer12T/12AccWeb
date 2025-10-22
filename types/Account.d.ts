@@ -31,6 +31,8 @@ export type ExcelAccountAll = {
 export type AccountFromExcel = {
   TaxInvoiceDate: float;
   AccountingEntryDate: float;
+  TaxInvoiceDateStr: number;
+  AccountingEntryDateStr : number;
   TaxID: string;
   MerchantName: string;
   Location: string;

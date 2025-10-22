@@ -1,6 +1,7 @@
 <template>
     <section class="min-h-screen flex flex-col items-stretch justify-center bg-gray-50 px-8">
-        <div class="w-full max-w-6xl mx-auto bg-white rounded-xl shadow p-8">
+        <div class="w-full max-w-none mx-auto bg-white rounded-xl shadow p-8">
+
             <!-- Header -->
             <div class="text-center mb-6">
                 <h1 class="text-2xl font-bold text-gray-800">📤 อัปโหลดไฟล์ Excel</h1>
@@ -16,7 +17,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M3 16.5V8.25a2.25 2.25 0 012.25-2.25h4.5A2.25 2.25 0 0112 8.25v8.25m0 0l3-3m-3 3l-3-3m3 3V3" />
                     </svg>
-                    
+
                     <p class="text-gray-600">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือก</p>
                     <input type="file" ref="fileInput" id="excelFile" class="hidden" accept=".xlsx,.xls"
                         @change="onFileSelected" />
@@ -62,24 +63,32 @@
                     <table class="min-w-full text-sm text-left border-collapse">
                         <thead class="bg-gray-100 border-b">
                             <tr>
-                                <th class="px-3 py-2 font-semibold text-gray-700">saleCode</th>
-                                <th class="px-3 py-2 font-semibold text-gray-700">username</th>
-                                <th class="px-3 py-2 font-semibold text-gray-700">firstName</th>
-                                <th class="px-3 py-2 font-semibold text-gray-700">surName</th>
-                                <th class="px-3 py-2 font-semibold text-gray-700">password</th>
-                                <th class="px-3 py-2 font-semibold text-gray-700">tel</th>
-                                <th class="px-3 py-2 font-semibold text-gray-700">area</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">TaxInvoiceDate</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">AccountingEntryDate</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">TaxID</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">MerchantName</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">Location</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">BranchNumber</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">InvoiceNo</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">ExcludeVATAmount</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">VATAmount</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">VoucherNumber</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">VATBranch</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="value in dataExcel" :key="value.saleCode" class="hover:bg-gray-50">
-                                <td class="px-3 py-2 border-t">{{ value.saleCode }}</td>
-                                <td class="px-3 py-2 border-t">{{ value.username }}</td>
-                                <td class="px-3 py-2 border-t">{{ value.firstName }} </td>
-                                <td class="px-3 py-2 border-t">{{ value.surName }} </td>
-                                <td class="px-3 py-2 border-t">{{ value.password }} </td>
-                                <td class="px-3 py-2 border-t">{{ value.tel }} </td>
-                                <td class="px-3 py-2 border-t">{{ value.area }} </td>
+                            <tr v-for="value in dataExcel" :key="value.TaxID" class="hover:bg-gray-50">
+                                <td class="px-3 py-2 border-t">{{ value.TaxInvoiceDateStr }}</td>
+                                <td class="px-3 py-2 border-t">{{ value.AccountingEntryDateStr }}</td>
+                                <td class="px-3 py-2 border-t">{{ value.TaxID }} </td>
+                                <td class="px-3 py-2 border-t">{{ value.MerchantName.slice(0, 36) }} </td>
+                                <td class="px-3 py-2 border-t">{{ value.Location.slice(0,40 ) }} </td>
+                                <td class="px-3 py-2 border-t">{{ value.BranchNumber }} </td>
+                                <td class="px-3 py-2 border-t">{{ value.InvoiceNo }} </td>
+                                <td class="px-3 py-2 border-t">{{ value.ExcludeVATAmount }} </td>
+                                <td class="px-3 py-2 border-t">{{ value.VATAmount }} </td>
+                                <td class="px-3 py-2 border-t">{{ value.VoucherNumber }} </td>
+                                <td class="px-3 py-2 border-t">{{ value.VATBranch }} </td>
                             </tr>
                         </tbody>
                     </table>
@@ -90,78 +99,105 @@
 </template>
 
 
-
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth';
-import type { ExcelAccount } from "~/types/Account";
+import type { AccountFromExcel } from "~/types/Account";
 const { default: XLSX } = await import("xlsx-js-style");
+import {
+    excelDateToJSDate,
+    formatDateToYYYYMMDD,
+    getThaiRegisterTime,
+} from "~/middleware/excelDateToJSDate";
+
+
 const store = useAuthStore();
 
 const selectedFile = ref<File | null>(null)
 const formatError = ref<boolean | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const fileName = ref<string>('')
-const dataExcel = ref<ExcelAccount[] | null>(null)
+const dataExcel = ref<AccountFromExcel[] | null>(null)
 const router = useRouter();
 
 
 const onFileSelected = async (event: Event) => {
     const target = event.target as HTMLInputElement
     const file = target.files?.[0]
-    if (file) {
-        fileName.value = file.name
+    if (!file) return
 
-        // ✅ อ่านไฟล์แบบ binary
-        const data = await file.arrayBuffer()
-        const workbook = XLSX.read(data, { type: 'array' })
+    fileName.value = file.name
 
+    const data = await file.arrayBuffer()
+    const workbook = XLSX.read(data, { type: 'array' })
 
-        if (!workbook.SheetNames[0]) {
-            throw new Error('❌ ไม่พบชีตในไฟล์ Excel')
-        }
+    if (!workbook.SheetNames[0]) throw new Error('❌ ไม่พบชีตในไฟล์ Excel')
 
-        const sheet = workbook.Sheets[workbook.SheetNames[0]]
+    const sheet = workbook.Sheets[workbook.SheetNames[0]]
+    if (!sheet) throw new Error('❌ ไม่พบชีตในไฟล์ Excel')
 
-        if (!sheet) {
-            throw new Error('❌ ไม่พบชีตในไฟล์ Excel')
-        }
+    // ✅ อ่านเฉพาะ header ก่อน
+    const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 })
+    const headerRow = rows[0] || []
 
-        const jsonData = XLSX.utils.sheet_to_json<ExcelAccount>(sheet)
+    const requiredKeys = [
+        'TaxInvoiceDate',
+        'AccountingEntryDate',
+        'TaxID',
+        'MerchantName',
+        'Location',
+        'BranchNumber',
+        'InvoiceNo',
+        'ExcludeVATAmount',
+        'VATAmount',
+        'VoucherNumber',
+        'VATBranch'
+    ] as const satisfies (keyof AccountFromExcel)[]
 
+    const columns = headerRow.map(String)
+    // console.log("columns", columns)
 
-        const requiredKeys = [
-            'saleCode',
-            'username',
-            'firstName',
-            'surName',
-            'password',
-            'tel',
-            'area'
-        ] as const satisfies (keyof ExcelAccount)[]
-        const firstRow = jsonData[0]
-        if (!firstRow) {
-            alert('❌ ไม่พบข้อมูลแถวแรกในไฟล์ Excel')
-            return
-        }
-        const firstRowKeys = Object.keys(firstRow)
-        const missing = requiredKeys.filter(k => !firstRowKeys.includes(k))
-
-        formatError.value = false
-        if (missing.length > 0) {
-            // alert(`❌ คอลัมน์ในไฟล์ไม่ครบ: ${missing.join(', ')}`)
-            formatError.value = true
-            dataExcel.value = []
-            return
-        }
-
-        dataExcel.value = jsonData
-        selectedFile.value = file
-        // console.log('📑 ข้อมูลจาก Excel:', jsonData)
+    if (columns.length === 0) {
+        alert('❌ ไม่พบคอลัมน์ในไฟล์ Excel')
+        return
     }
 
+    // ✅ ตรวจสอบคอลัมน์ครบไหม
+    const missing = requiredKeys.filter(k => !columns.includes(k))
+    if (missing.length > 0) {
+        alert(`❌ คอลัมน์ในไฟล์ไม่ครบ: ${missing.join(', ')}`)
+        formatError.value = true
+        dataExcel.value = []
+        return
+    }
+
+    formatError.value = false
+
+    // ✅ อ่านข้อมูลจริงหลังจากผ่านการตรวจสอบ header แล้ว
+    const jsonData = XLSX.utils.sheet_to_json<AccountFromExcel>(sheet)
+    // dataExcel.value = jsonData
+    dataExcel.value = jsonData.map(item => {
+        const TaxInvoiceDate = excelDateToJSDate(item.TaxInvoiceDate);
+        const AccountingEntryDate = excelDateToJSDate(item.AccountingEntryDate);
+        const TaxInvoiceDateStr = Number(formatDateToYYYYMMDD(TaxInvoiceDate));
+        const AccountingEntryDateStr = Number(formatDateToYYYYMMDD(AccountingEntryDate));
+
+        return {
+            ...item,
+            TaxInvoiceDateStr,
+            AccountingEntryDateStr
+        };
+    });
+
+
+
+
+    selectedFile.value = file
+    target.value = ''
+    // console.log('📑 ข้อมูลจาก Excel:', jsonData)
 }
+
 
 const clearData = () => {
     fileName.value = ''
@@ -177,7 +213,7 @@ const openFileDialog = () => {
 }
 
 const uploadExcelFile = async (file: File) => {
-    console.log("handleFileUpload")
+    // console.log("handleFileUpload")
     const formData = new FormData()
     formData.append("file", file)
 
@@ -185,13 +221,23 @@ const uploadExcelFile = async (file: File) => {
         const data = await $fetch('/api/account/uploadGasolinecost', {
             method: 'POST',
             body: formData
-        });
-        console.log("อัปโหลดสำเร็จ", data);
+        })
+        console.log("อัปโหลดสำเร็จ", data)
         alert("อัปโหลดสำเร็จ")
-    } catch (error) {
-        console.error("อัปโหลดล้มเหลว", error);
-        alert("อัปโหลดล้มเหลว")
-    }
+    } catch (error: any) {
+        console.error("อัปโหลดล้มเหลว", error)
+
+        const status = error?.response?.status
+        const message = error?.response?._data?.message || error.message || "ไม่ทราบสาเหตุ"
+        const responseData = error?.response?._data
+        if (status === 405) {
+            const duplicates = responseData?.data || []
+            alert(`❌ ข้อมูลซ้ำ ${duplicates.length} รายการ:\n${duplicates.join('\n')}`)
+        } else if (status === 400) {
+            alert("⚠️ ข้อมูลไม่ถูกต้อง: " + message)
+        }
+    } 
+
 }
 
 
