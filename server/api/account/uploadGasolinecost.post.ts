@@ -83,7 +83,14 @@ export default defineEventHandler(async (event) => {
       existInvoice.push(String(item.InvoiceNo));
     }
   }
-  // console.log(existInvoice.length);
+  if (json.length == 0) {
+    setResponseStatus(event, 404);
+    return {
+      statusCode: 404,
+      message: "Not found data",
+    };
+  }
+
   if (existInvoice.length > 0) {
     setResponseStatus(event, 405);
     return {
@@ -117,9 +124,9 @@ export default defineEventHandler(async (event) => {
           TVCUCD: "",
           TVIVDT: TaxInvoiceDateStr,
           TVACDT: AccountingEntryDateStr,
-          TVVONO: row.voucherNumber ?? 0,
+          TVVONO: row.VoucherNumber ?? 0,
           TVSPYN: "",
-          TVSUNM: row.MerchantName.slice(0, 36),
+          TVSUNM: row.MerchantName?.slice(0, 36),
           TVADR1: "",
           TVRGDT: Number(today),
           TVRGTM: Number(TVRGTM),
