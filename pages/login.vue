@@ -59,4 +59,8 @@ const SignIn = async () => {
         loginValidation.value = true;
     }
 };
+
+definePageMeta({
+  layout: false // ❌ ใช้ layout ปกติไม่ได้ → ไม่มี navbar
+})
 </script>

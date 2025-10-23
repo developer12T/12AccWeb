@@ -113,7 +113,7 @@ export default defineEventHandler(async (event) => {
         const dataTran = {
           TVCONO: 410,
           TVDIVI: "OTT",
-          TVYEA4: 2026,
+          TVYEA4: Number(today.slice(0,4)),
           TVSUNO: "L060003",
           TVSINO: String(row.InvoiceNo),
           TVTXNO: String(row.InvoiceNo),

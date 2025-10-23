@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex flex-col bg-gray-50">
-    <!-- Navbar -->
+    <navbar></navbar>
     <!-- <header class="bg-blue-600 text-white p-4 shadow"> -->
       <!-- <h1 class="text-lg font-semibold">12AccWeb</h1> -->
     <!-- </header> -->
