@@ -59,7 +59,7 @@ const toggleUserMenu = () => {
 
 };
 
-const toggleSidebar = inject<() => void>('toggleSidebar')
+// const toggleSidebar = inject<() => void>('toggleSidebar')
 
 const SignOut = async () => {
   store.logout()
@@ -74,7 +74,7 @@ onMounted(() => {
   userProfile.value.username = username
   userProfile.value.fullName = fullName
   console.log(username)
-  if (toggleSidebar) toggleSidebar()
+  // if (toggleSidebar) toggleSidebar()
 })
 </script>
 
