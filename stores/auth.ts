@@ -20,13 +20,13 @@ export const useAuthStore = defineStore('auth', {
       try {
         // ✅ ใช้ $fetch แทน axios
         const config = useRuntimeConfig()
-
+        console.log(config.public.API_URL)
         const response = await $fetch<LoginResponse>('/api/cash/login', {
           baseURL: config.public.API_URL as string, // 🔸 ใช้จาก .env
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-channel': 'cash'
+            // 'x-channel': 'cash'
           },
           body: {
             username: userLogin,
