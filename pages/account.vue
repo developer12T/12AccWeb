@@ -11,7 +11,7 @@
                 </button>
             </div>
             <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">โปรแกรม Upload ค่าน้ำมัน</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Upload ค่าน้ำมัน</h1>
                 <p class="text-gray-500 text-sm mt-1">📤 อัปโหลดไฟล์ Excel</p>
                 <p class="text-gray-500 text-sm mt-1">รองรับไฟล์ .xlsx หรือ .xls เท่านั้น</p>
 
@@ -356,12 +356,17 @@ const uploadExcelFile = async (file: File) => {
     formData.append("file", file)
 
     try {
+        Swal.fire({
+            title: 'กำลังอัปโหลด...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading()
+            }
+        })
         const data = await $fetch('/api/account/uploadGasolinecost', {
             method: 'POST',
             body: formData
         })
-        // console.log("อัปโหลดสำเร็จ", data)
-        // alert("อัปโหลดสำเร็จ")
         Swal.fire({
             icon: 'success',
             title: 'อัปโหลดสำเร็จ'
@@ -415,8 +420,8 @@ const handleFileUpload = () => {
         // alert("กรุณาเลือกไฟล์ก่อนอัปโหลด");
 
         Swal.fire({
-            icon:'error',
-            title:'กรุณาเลือกไฟล์ก่อนอัปโหลด'
+            icon: 'error',
+            title: 'กรุณาเลือกไฟล์ก่อนอัปโหลด'
         })
 
         return;

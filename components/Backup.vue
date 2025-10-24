@@ -45,45 +45,18 @@
   </nav>
 </template>
 
-<script lang="ts" setup>
-import { ref, inject, onMounted,computed } from 'vue'
-import { useAuthStore } from '../stores/auth';
-import { useRoute, useRouter } from 'vue-router'
-
-const isUserMenuOpen = ref(false)
-const userProfile = ref<{
-  username: string | null
-  fullName: string | null
-}>({
-  username: null,
-  fullName: null
-})
-const router = useRouter()
-const store = useAuthStore()
-
+<script setup>
 const route = useRoute()
 const isMobileMenuOpen = ref(false)
 
-const navItems = computed(() => [
+const navItems = [
   { id: 'home', label: 'หน้าแรก', path: '/', icon: 'IconHome' },
-  { id: 'users', label: 'Add Gasoline ', path: '/account', icon: 'IconUsers' },
-  { id: 'documents', label: 'เอกสาร', path: '', icon: 'IconFileText' },
-  { id: 'settings', label: 'ตั้งค่า', path: '', icon: 'IconSettings' },
-])
+  { id: 'users', label: 'ผู้ใช้งาน', path: '/users', icon: 'IconUsers' },
+  { id: 'documents', label: 'เอกสาร', path: '/documents', icon: 'IconFileText' },
+  { id: 'settings', label: 'ตั้งค่า', path: '/settings', icon: 'IconSettings' },
+]
 
-const isActive = (path?: string): boolean => {
-  return !!path && route.path === path
+const isActive = (path) => {
+  return route.path === path
 }
-
-
-onMounted(() => {
-  const username = localStorage.getItem('username')
-  const fullName = localStorage.getItem('fullName')
-  userProfile.value.username = username
-  userProfile.value.fullName = fullName
-  console.log(username)
-
-})
-
-
 </script>
