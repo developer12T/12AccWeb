@@ -1,10 +1,10 @@
 <template>
-  <header class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg">
+  <header class="">
     <div class="container mx-auto px-4 py-4">
       <div class="flex items-center justify-between">
         <!-- ฝั่งซ้าย -->
         <div class="text-2xl font-bold bg-white text-indigo-600 px-3 py-1 rounded-lg">
-          12Trading
+          <!-- 12Trading Account -->
         </div>
 
         <!-- ฝั่งขวา -->
@@ -14,7 +14,7 @@
             <IconSearch class="w-5 h-5" />
           </button>
           <div>
-            {{ userProfile.username}}
+            {{ userProfile.fullName}}
           </div>
 
 
