@@ -1,7 +1,7 @@
 <template>
     <section class="bg-gray-50">
         <div class="flex flex-col items-center justify-center px-6 py-16 sm:h-screen md:h-screen">
-            <div class="w-full bg-white rounded-lg shadow md:mt-0 sm:max-w-md">
+            <div class="w-full bg-white rounded-lg shadow md:mt-0" style="max-width: 600px;">
                 <div class="flex justify-center">
                     <div class="flex items-center">
                         <img class="h-24" src="/logo-onetwo.png" alt="logo" />
@@ -61,6 +61,6 @@ const SignIn = async () => {
 };
 
 definePageMeta({
-  layout: false // ❌ ใช้ layout ปกติไม่ได้ → ไม่มี navbar
+  layout: 'auth' // 🧱 ใช้ layout ที่ไม่มี sidebar/navbar
 })
 </script>
