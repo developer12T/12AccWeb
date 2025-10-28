@@ -109,6 +109,13 @@ export default defineEventHandler(async (event) => {
         const AccountingEntryDateStr = Number(
           formatDateToYYYYMMDD(AccountingEntryDate)
         );
+        const merchantName = row.MerchantName || "";
+        const TVSUNM = merchantName.slice(0, 36);
+        const TVADR1 = merchantName.length > 36 ? merchantName.slice(36) : "";
+        const location = row.Location || "";
+        const TVREM1 = location.slice(0, 40);
+        const TVREM2 = location.length > 40 ? location.slice(40) : "";
+
 
         const dataTran = {
           TVCONO: 410,
@@ -126,8 +133,8 @@ export default defineEventHandler(async (event) => {
           TVACDT: AccountingEntryDateStr,
           TVVONO: row.VoucherNumber ?? 0,
           TVSPYN: "",
-          TVSUNM: row.MerchantName?.slice(0, 36),
-          TVADR1: "",
+          TVSUNM: TVSUNM,
+          TVADR1: '',
           TVRGDT: Number(today),
           TVRGTM: Number(TVRGTM),
           TVLMDT: Number(today),
@@ -136,8 +143,8 @@ export default defineEventHandler(async (event) => {
           TVAIT2: row.VATBranch,
           TVVRNO: row.TaxID,
           TVVSEQ: row.BranchNumber ?? "0000",
-          TVREM1: row.Location?.slice(0, 40) || "",
-          TVREM2: "",
+          TVREM1: TVREM1,
+          TVREM2: '',
         };
         data.push(dataTran);
 

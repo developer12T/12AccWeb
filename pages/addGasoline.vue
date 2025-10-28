@@ -69,6 +69,9 @@
             <!-- Preview Table -->
             <div class="mt-6">
                 <h2 class="text-lg font-semibold text-gray-800 mb-3">📋 ข้อมูลตัวอย่างจาก Excel</h2>
+                <div class="flex">
+  <h6 class="text-lg font-semibold text-gray-800 mb-3 ml-auto">จำนวน {{ rowsData }} แถว  </h6>
+     </div>
                 <div class="overflow-x-auto border rounded-lg">
                     <table class="min-w-full text-sm text-left border-collapse">
                         <thead class="bg-gray-100 border-b">
@@ -87,7 +90,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="value in dataExcel" :key="value.TaxID" class="hover:bg-gray-50">
+                            <tr v-for="value in dataExcel" :key="value.TaxID" class="hover:bg-gray-50 text-xs">
                                 <td class="px-3 py-2 border-t">{{ value.TaxInvoiceDateStr }}</td>
                                 <td class="px-3 py-2 border-t">{{ value.AccountingEntryDateStr }}</td>
                                 <td class="px-3 py-2 border-t">{{ value.TaxID }} </td>
@@ -130,7 +133,7 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const fileName = ref<string>('')
 const dataExcel = ref<AccountFromExcel[] | null>(null)
 const router = useRouter();
-
+const rowsData = ref<number>(0)
 
 const onFileSelected = async (event: Event) => {
     const target = event.target as HTMLInputElement
@@ -255,8 +258,8 @@ const onFileSelected = async (event: Event) => {
             typeErrors.push(`แถวที่ ${index + 2}: VATBranch ยาวเกินไป (เกิน 8 ตัวอักษร)`)
         }
 
-        console.log("typeof", typeof item.TaxInvoiceDate)
 
+        rowsData.value += 1
         const TaxInvoiceDate = excelDateToJSDate(item.TaxInvoiceDate)
         const AccountingEntryDate = excelDateToJSDate(item.AccountingEntryDate)
         const TaxInvoiceDateStr = Number(formatDateToYYYYMMDD(TaxInvoiceDate))
@@ -341,6 +344,7 @@ const clearData = () => {
     fileName.value = ''
     dataExcel.value = []
     formatError.value = null
+    rowsData.value = 0
     const input = document.getElementById('excelFile') as HTMLInputElement
     if (input) input.value = '' // ✅ ล้างค่าของ input file
     console.log('🧹 เคลียร์ข้อมูลเรียบร้อย')
