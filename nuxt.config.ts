@@ -2,6 +2,9 @@ import Inspect from 'vite-plugin-inspect'
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
+  app: {
+    baseURL: '/12AccWeb/',
+  },
   devtools: { enabled: true },
     plugins: [
     '~/plugins/shortcut.client'
