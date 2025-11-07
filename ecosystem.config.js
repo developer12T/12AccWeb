@@ -1,6 +1,6 @@
-require('dotenv').config();
+import 'dotenv/config';
 
-module.exports = {
+export default {
   apps: [
     {
       name: '12AccWeb',
@@ -13,10 +13,13 @@ module.exports = {
       max_memory_restart: '512M',
       env: {
         NODE_ENV: 'production',
-        // 👇 บังคับ override ค่า PORT ให้เป็น 8009
-        PORT: 8009,
-        NITRO_PORT: 8009,
-        NITRO_HOST: '0.0.0.0',
+
+        // 👇 บังคับให้ Nuxt ใช้พอร์ตนี้แน่ ๆ
+        PORT: process.env.NITRO_PORT || 8009,
+        NITRO_PORT: process.env.NITRO_PORT || 8009,
+        NITRO_HOST: process.env.NITRO_HOST || '0.0.0.0',
+
+        // ✅ โหลดค่าทั้งหมดจาก .env
         ...process.env
       }
     }
